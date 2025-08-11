@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEAT JavaScript Example</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .output { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 20px 0; }
+        .stat { background: #e9ecef; padding: 10px; border-radius: 5px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NEAT JavaScript Example</h1>
+        <p>This example demonstrates the JavaScript NEAT implementation with a simple XOR problem.</p>
+        <p><strong>Tip:</strong> When integrating NEAT into games, ensure obstacles spawn consistently per generation and prefer distance-based spawning over frame-based timers to avoid biased behaviors.</p>
+        
+        <button onclick="initializeNEAT()">Initialize NEAT</button>
+        <button onclick="runGeneration()">Run Generation</button>
+        <button onclick="runMultipleGenerations()">Run 10 Generations</button>
+        <button onclick="testBestNetwork()">Test Best Network</button>
+        <button onclick="resetNEAT()">Reset</button>
+
+        <div class="stats" id="stats"></div>
+        <div class="output" id="output">Ready to start NEAT evolution...</div>
+    </div>
+
+    <!-- Include all NEAT files -->
+    <script src="NumberGenerator.js"></script>
+    <script src="Configuration.js"></script>
+    <script src="BinaryIO.js"></script>
+    <script src="Activation.js"></script>
+    <script src="DAG.js"></script>
+    <script src="Network.js"></script>
+    <script src="Genome.js"></script>
+    <script src="Mutator.js"></script>
+    <script src="NetworkGenerator.js"></script>
+    <script src="NEAT.js"></script>
+
+    <script>
+        let neat = null;
+
+        // XOR fitness function
+        function xorFitnessFunction(network) {
+            const testCases = [
+                { inputs: [0, 0], expectedOutput: [0] },
+                { inputs: [0, 1], expectedOutput: [1] },
+                { inputs: [1, 0], expectedOutput: [1] },
+                { inputs: [1, 1], expectedOutput: [0] }
+            ];
+
+            let totalError = 0;
+            for (const testCase of testCases) {
+                network.execute(testCase.inputs);
+                const outputs = network.getResult();
+                const error = Math.abs(outputs[0] - testCase.expectedOutput[0]);
+                totalError += error;
+            }
+
+            // Higher fitness for lower error
+            return 4 - totalError;
+        }
+
+        function initializeNEAT() {
+            neat = new NEAT(2, 1); // 2 inputs (XOR), 1 output
+            neat.initializePopulation(50);
+            log("NEAT initialized with population of 50");
+            updateStats();
+        }
+
+        function runGeneration() {
+            if (!neat) {
+                log("Please initialize NEAT first!");
+                return;
+            }
+
+            neat.evaluatePopulation(xorFitnessFunction);
+            neat.evolve();
+            
+            const stats = neat.getStats();
+            log(`Generation ${stats.generation}: Best=${stats.maxFitness.toFixed(3)}, Avg=${stats.avgFitness.toFixed(3)}`);
+            updateStats();
+        }
+
+        function runMultipleGenerations() {
+            if (!neat) {
+                log("Please initialize NEAT first!");
+                return;
+            }
+
+            for (let i = 0; i < 10; i++) {
+                neat.evaluatePopulation(xorFitnessFunction);
+                neat.evolve();
+            }
+            
+            const stats = neat.getStats();
+            log(`Completed 10 generations. Best fitness: ${stats.maxFitness.toFixed(3)}`);
+            updateStats();
+        }
+
+        function testBestNetwork() {
+            if (!neat || !neat.bestGenome) {
+                log("No best network available!");
+                return;
+            }
+
+            const network = neat.getBestNetwork();
+            log("Testing best network on XOR:");
+            
+            const testCases = [
+                [0, 0], [0, 1], [1, 0], [1, 1]
+            ];
+            
+            for (const inputs of testCases) {
+                network.execute(inputs);
+                const output = network.getResult()[0];
+                log(`${inputs[0]} XOR ${inputs[1]} = ${output.toFixed(3)}`);
+            }
+        }
+
+        function resetNEAT() {
+            neat = null;
+            log("NEAT reset");
+            updateStats();
+        }
+
+        function updateStats() {
+            const statsDiv = document.getElementById('stats');
+            if (!neat) {
+                statsDiv.innerHTML = '<div class="stat">No NEAT instance</div>';
+                return;
+            }
+
+            const stats = neat.getStats();
+            if (!stats) {
+                statsDiv.innerHTML = '<div class="stat">No statistics available</div>';
+                return;
+            }
+
+            statsDiv.innerHTML = `
+                <div class="stat"><strong>Generation</strong><br>${stats.generation}</div>
+                <div class="stat"><strong>Best Fitness</strong><br>${stats.maxFitness.toFixed(3)}</div>
+                <div class="stat"><strong>Avg Fitness</strong><br>${stats.avgFitness.toFixed(3)}</div>
+                <div class="stat"><strong>Population</strong><br>${stats.populationSize}</div>
+            `;
+        }
+
+        function log(message) {
+            const output = document.getElementById('output');
+            output.innerHTML += message + '<br>';
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // Auto-initialize on load
+        window.onload = function() {
+            log("NEAT JavaScript implementation loaded successfully!");
+            log("Click 'Initialize NEAT' to start evolution.");
+        };
+    </script>
+</body>
+</html>
