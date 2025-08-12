@@ -21,9 +21,9 @@ class Genome {
                 this.createNode(Activation.None, false);
             }
             // Create output nodes (C++ uses reverse loop)
-            // Usar Sigm no output facilita controle [0,1] do impulso
+            // Usar Tanh no output para controle bidirecional [-1,1] melhor que Sigm
             for (let i = outputs; i > 0; i--) {
-                this.createNode(Activation.Sigm, false);
+                this.createNode(Activation.Tanh, false);
             }
         }
     }

@@ -5,7 +5,7 @@ const conf = {
     
     // Mutation configuration - EXACT VALUES FROM C++
     mut: {
-        new_node_proba: 0.05,      // C++: 0.05f
+        new_node_proba: 0.5,      // C++: 0.05f
         new_conn_proba: 0.8,       // C++: 0.8f  
         new_value_proba: 0.2,      // C++: 0.2f
         weight_range: 1.0,         // C++: 1.0 (double)
